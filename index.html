@@ -1,0 +1,700 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#fff8ec">
+  <title>우리 반 실시간 이모티콘</title>
+  <style>
+    :root {
+      --bg: #fff8ec;
+      --paper: #ffffff;
+      --ink: #25324a;
+      --muted: #667085;
+      --line: #eadfce;
+      --blue: #377dff;
+      --blue-dark: #195ecf;
+      --pink: #f05f8f;
+      --pink-dark: #c83d6d;
+      --yellow: #f2b533;
+      --yellow-dark: #c78608;
+      --green: #247a55;
+      --red: #b42318;
+      --shadow: 0 18px 45px rgba(66, 49, 28, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html { font-size: 16px; }
+
+    body {
+      margin: 0;
+      min-width: 280px;
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 8%, rgba(242, 181, 51, 0.22), transparent 28rem),
+        radial-gradient(circle at 92% 92%, rgba(55, 125, 255, 0.14), transparent 30rem),
+        var(--bg);
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", system-ui, sans-serif;
+      line-height: 1.55;
+    }
+
+    button, input { font: inherit; }
+
+    button { min-height: 44px; }
+
+    button:focus-visible, input:focus-visible {
+      outline: 4px solid rgba(55, 125, 255, 0.28);
+      outline-offset: 3px;
+    }
+
+    .app-shell {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 24px 0 48px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 52px;
+      margin-bottom: 18px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 1.08rem;
+    }
+
+    .brand-mark {
+      display: grid;
+      place-items: center;
+      width: 42px;
+      height: 42px;
+      border-radius: 14px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      font-size: 1.4rem;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      padding: 8px 13px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.82);
+      color: var(--muted);
+      font-size: 0.95rem;
+      font-weight: 700;
+    }
+
+    .status-dot {
+      width: 11px;
+      height: 11px;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: #98a2b3;
+    }
+
+    .status[data-state="online"] { color: var(--green); }
+    .status[data-state="online"] .status-dot { background: #2eae73; box-shadow: 0 0 0 4px rgba(46,174,115,.14); }
+    .status[data-state="offline"], .status[data-state="error"] { color: var(--red); }
+    .status[data-state="offline"] .status-dot, .status[data-state="error"] .status-dot { background: #ef5b4c; }
+
+    .screen { display: none; animation: enter .25s ease-out; }
+    .screen.active { display: block; }
+
+    @keyframes enter {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .panel {
+      border: 1px solid rgba(234, 223, 206, 0.9);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.92);
+      box-shadow: var(--shadow);
+    }
+
+    .welcome {
+      max-width: 820px;
+      margin: 6vh auto 0;
+      padding: clamp(28px, 5vw, 58px);
+      text-align: center;
+    }
+
+    h1, h2, p { margin-top: 0; }
+
+    h1 {
+      margin-bottom: 12px;
+      font-size: clamp(2rem, 5vw, 3.75rem);
+      line-height: 1.16;
+      letter-spacing: -0.045em;
+    }
+
+    .lead {
+      margin-bottom: 30px;
+      color: var(--muted);
+      font-size: clamp(1rem, 2vw, 1.25rem);
+    }
+
+    .mode-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .mode-button {
+      min-height: 142px;
+      border: 0;
+      border-radius: 24px;
+      color: white;
+      cursor: pointer;
+      font-size: clamp(1.35rem, 3vw, 2rem);
+      font-weight: 900;
+      box-shadow: 0 13px 25px rgba(37,50,74,.12);
+      transition: transform .15s ease, filter .15s ease;
+    }
+
+    .mode-button:hover { filter: brightness(1.04); transform: translateY(-2px); }
+    .mode-button.teacher { background: linear-gradient(135deg, #4068dd, var(--blue)); }
+    .mode-button.student { background: linear-gradient(135deg, #eb5e83, #f58a64); }
+
+    .password-box {
+      display: none;
+      max-width: 520px;
+      margin: 26px auto 0;
+      padding: 24px;
+      border: 2px solid #dbe5ff;
+      border-radius: 20px;
+      background: #f7f9ff;
+      text-align: left;
+    }
+
+    .password-box.open { display: block; }
+
+    label { display: block; margin-bottom: 8px; font-weight: 800; }
+
+    .password-row { display: flex; gap: 10px; }
+
+    input[type="password"] {
+      width: 100%;
+      min-width: 0;
+      min-height: 50px;
+      padding: 10px 14px;
+      border: 2px solid #aebbd5;
+      border-radius: 13px;
+      background: white;
+      color: var(--ink);
+      font-size: 1.15rem;
+    }
+
+    .primary, .home-button {
+      border: 0;
+      border-radius: 13px;
+      cursor: pointer;
+      font-weight: 900;
+    }
+
+    .primary { padding: 10px 22px; background: var(--blue); color: white; white-space: nowrap; }
+    .home-button { padding: 9px 16px; background: var(--paper); color: var(--ink); border: 1px solid var(--line); }
+    .form-error { min-height: 28px; margin: 8px 0 0; color: var(--red); font-weight: 700; }
+
+    .screen-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .screen-header h1 { margin-bottom: 5px; }
+    .screen-header p { margin-bottom: 0; color: var(--muted); font-size: 1.08rem; }
+
+    .reaction-buttons {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-bottom: 22px;
+    }
+
+    .reaction-button {
+      min-height: 126px;
+      padding: 18px 10px;
+      border: 0;
+      border-radius: 24px;
+      color: white;
+      cursor: pointer;
+      font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+      font-weight: 900;
+      box-shadow: 0 13px 24px rgba(37,50,74,.13);
+      transition: transform .12s ease, filter .12s ease;
+    }
+
+    .reaction-button:hover { filter: brightness(1.04); transform: translateY(-2px); }
+    .reaction-button:active, .reaction-button.pop { transform: scale(1.07); }
+    .reaction-button:disabled { cursor: not-allowed; filter: grayscale(.45); opacity: .65; transform: none; }
+    .reaction-button.like { background: linear-gradient(135deg, var(--blue), #66a5ff); }
+    .reaction-button.empathy { background: linear-gradient(135deg, var(--pink-dark), var(--pink)); }
+    .reaction-button.cheer { background: linear-gradient(135deg, var(--yellow-dark), var(--yellow)); }
+
+    .feedback {
+      min-height: 31px;
+      margin: -6px 0 14px;
+      text-align: center;
+      font-weight: 800;
+    }
+    .feedback.success { color: var(--green); }
+    .feedback.error { color: var(--red); }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(320px, .7fr);
+      gap: 20px;
+    }
+
+    .reaction-stage, .count-panel { min-height: 390px; padding: clamp(22px, 3vw, 34px); }
+    .reaction-stage { position: relative; overflow: hidden; }
+
+    .section-title { margin-bottom: 18px; font-size: 1.25rem; }
+
+    .reaction-cloud {
+      position: relative;
+      min-height: 300px;
+      border-radius: 20px;
+      background: linear-gradient(145deg, #fff7df, #eef6ff);
+      overflow: hidden;
+      isolation: isolate;
+    }
+
+    .empty-message {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      color: var(--muted);
+      text-align: center;
+      font-size: 1.06rem;
+    }
+
+    .floating-reaction {
+      position: absolute;
+      left: var(--x);
+      bottom: -55px;
+      z-index: 2;
+      font-size: clamp(2.4rem, 7vw, 4.8rem);
+      filter: drop-shadow(0 8px 8px rgba(37,50,74,.12));
+      animation: floatUp 4.8s ease-out forwards;
+      pointer-events: none;
+    }
+
+    @keyframes floatUp {
+      0% { opacity: 0; transform: translateY(0) scale(.7) rotate(-8deg); }
+      15% { opacity: 1; }
+      75% { opacity: 1; transform: translateY(-245px) scale(1.08) rotate(7deg); }
+      100% { opacity: 0; transform: translateY(-330px) scale(.9) rotate(-3deg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+
+    .total-card {
+      margin-bottom: 18px;
+      padding: 22px;
+      border-radius: 20px;
+      background: var(--ink);
+      color: white;
+      text-align: center;
+    }
+
+    .total-card strong { display: block; font-size: clamp(2.4rem, 5vw, 4rem); line-height: 1.05; }
+    .total-card span { display: block; margin-top: 8px; font-size: 1.08rem; }
+
+    .counts { display: grid; gap: 12px; }
+    .count-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      min-height: 68px;
+      padding: 12px 16px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fffdf9;
+      font-size: 1.08rem;
+      font-weight: 800;
+    }
+    .count-row strong { font-size: 1.65rem; }
+
+    .teacher-total {
+      margin: 0 0 24px;
+      padding: 24px;
+      border-radius: 24px;
+      background: linear-gradient(135deg, var(--blue-dark), #4d8cff);
+      color: white;
+      text-align: center;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 800;
+    }
+    .teacher-total strong { font-size: clamp(3rem, 7vw, 5.5rem); line-height: 1; }
+
+    details.production-note {
+      max-width: 820px;
+      margin: 22px auto 0;
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+    details.production-note summary { cursor: pointer; font-weight: 800; }
+    details.production-note p { margin-top: 8px; }
+
+    @media (max-width: 820px) {
+      .mode-grid, .reaction-buttons, .dashboard { grid-template-columns: 1fr; }
+      .reaction-button { min-height: 94px; }
+      .reaction-stage, .count-panel { min-height: auto; }
+      .reaction-cloud { min-height: 260px; }
+      .screen-header { align-items: stretch; flex-direction: column-reverse; }
+      .home-button { align-self: flex-start; }
+    }
+
+    @media (max-width: 520px) {
+      .app-shell { width: min(100% - 20px, 1120px); padding-top: 12px; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .status { width: 100%; justify-content: center; border-radius: 14px; }
+      .welcome { margin-top: 1vh; padding: 26px 18px; border-radius: 22px; }
+      .password-row { flex-direction: column; }
+      .primary { width: 100%; }
+      .panel { border-radius: 21px; }
+      .reaction-stage, .count-panel { padding: 18px; }
+      .count-row { min-height: 60px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">🎈</span><span>우리 반 반응판</span></div>
+      <div id="connectionStatus" class="status" data-state="connecting" role="status" aria-live="polite">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span id="connectionText">Firebase 연결 확인 중</span>
+      </div>
+    </header>
+
+    <section id="homeScreen" class="screen active" aria-labelledby="homeTitle">
+      <div class="panel welcome">
+        <h1 id="homeTitle">실시간 이모티콘 보내기</h1>
+        <p class="lead">수업에서 사용할 화면을 선택해 주세요.</p>
+        <div class="mode-grid">
+          <button id="teacherModeButton" class="mode-button teacher" type="button">👩‍🏫 강사 모드</button>
+          <button id="studentModeButton" class="mode-button student" type="button">🙋 학생 모드</button>
+        </div>
+
+        <form id="passwordBox" class="password-box" novalidate>
+          <label for="teacherPassword">강사 모드 비밀번호</label>
+          <div class="password-row">
+            <input id="teacherPassword" type="password" inputmode="numeric" autocomplete="off" maxlength="12" aria-describedby="passwordError">
+            <button class="primary" type="submit">강사 화면 열기</button>
+          </div>
+          <p id="passwordError" class="form-error" role="alert" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <details class="production-note">
+        <summary>제작 안내</summary>
+        <p>비밀번호 1004는 수업 실습용 화면 진입 제한입니다. HTML 파일 안에서 확인할 수 있으므로 실제 데이터 보안을 보장하지 않습니다.</p>
+      </details>
+    </section>
+
+    <section id="studentScreen" class="screen" aria-labelledby="studentTitle">
+      <div class="screen-header">
+        <div>
+          <h1 id="studentTitle">지금 내 반응을 보내요!</h1>
+          <p>마음에 맞는 버튼을 여러 번 눌러도 됩니다.</p>
+        </div>
+        <button class="home-button" type="button" data-home>처음으로</button>
+      </div>
+
+      <div class="reaction-buttons" aria-label="반응 보내기">
+        <button class="reaction-button like" type="button" data-reaction="like">👍 좋아요</button>
+        <button class="reaction-button empathy" type="button" data-reaction="empathy">❤️ 공감해요</button>
+        <button class="reaction-button cheer" type="button" data-reaction="cheer">👏 응원해요</button>
+      </div>
+      <p id="sendFeedback" class="feedback" role="status" aria-live="polite"></p>
+
+      <div class="dashboard">
+        <section class="panel reaction-stage" aria-labelledby="studentLiveTitle">
+          <h2 id="studentLiveTitle" class="section-title">우리 반의 실시간 반응</h2>
+          <div id="studentCloud" class="reaction-cloud" aria-live="polite">
+            <p class="empty-message">친구들의 반응이 여기에 나타나요.</p>
+          </div>
+        </section>
+        <aside class="panel count-panel" aria-label="종류별 누적 횟수">
+          <div class="total-card"><strong id="studentTotal">0</strong><span>지금까지 반응</span></div>
+          <div class="counts">
+            <div class="count-row"><span>👍 좋아요</span><strong id="studentLike">0</strong></div>
+            <div class="count-row"><span>❤️ 공감해요</span><strong id="studentEmpathy">0</strong></div>
+            <div class="count-row"><span>👏 응원해요</span><strong id="studentCheer">0</strong></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+
+    <section id="teacherScreen" class="screen" aria-labelledby="teacherTitle">
+      <div class="screen-header">
+        <div>
+          <h1 id="teacherTitle">우리 반 실시간 반응</h1>
+          <p>학생들이 보내는 반응이 새로고침 없이 나타납니다.</p>
+        </div>
+        <button class="home-button" type="button" data-home>처음으로</button>
+      </div>
+
+      <div class="teacher-total">지금까지 반응 <strong id="teacherTotal">0</strong>회</div>
+
+      <div class="dashboard">
+        <section class="panel reaction-stage" aria-labelledby="teacherLiveTitle">
+          <h2 id="teacherLiveTitle" class="section-title">방금 도착한 반응</h2>
+          <div id="teacherCloud" class="reaction-cloud" aria-live="polite">
+            <p class="empty-message">학생의 반응을 기다리고 있어요.</p>
+          </div>
+        </section>
+        <aside class="panel count-panel" aria-label="종류별 누적 횟수">
+          <h2 class="section-title">종류별 누적 횟수</h2>
+          <div class="counts">
+            <div class="count-row"><span>👍 좋아요</span><strong id="teacherLike">0</strong></div>
+            <div class="count-row"><span>❤️ 공감해요</span><strong id="teacherEmpathy">0</strong></div>
+            <div class="count-row"><span>👏 응원해요</span><strong id="teacherCheer">0</strong></div>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-database-compat.js"></script>
+  <script>
+    'use strict';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyBxSiGix1Efe0qYoSRsSEOJ1DuD92NM7xo",
+      authDomain: "inoticon.firebaseapp.com",
+      databaseURL: "https://inoticon-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "inoticon",
+      storageBucket: "inoticon.firebasestorage.app",
+      messagingSenderId: "690096537410",
+      appId: "1:690096537410:web:233a37badbd6abe5c3d2db"
+    };
+
+    const PRACTICE_PATH = 'practice/reactions';
+    const reactionInfo = {
+      like: { emoji: '👍', label: '좋아요' },
+      empathy: { emoji: '❤️', label: '공감해요' },
+      cheer: { emoji: '👏', label: '응원해요' }
+    };
+
+    const screens = {
+      home: document.getElementById('homeScreen'),
+      student: document.getElementById('studentScreen'),
+      teacher: document.getElementById('teacherScreen')
+    };
+    const connectionStatus = document.getElementById('connectionStatus');
+    const connectionText = document.getElementById('connectionText');
+    const passwordBox = document.getElementById('passwordBox');
+    const teacherPassword = document.getElementById('teacherPassword');
+    const passwordError = document.getElementById('passwordError');
+    const sendFeedback = document.getElementById('sendFeedback');
+    const sendButtons = [...document.querySelectorAll('[data-reaction]')];
+    let database = null;
+    let isConnected = false;
+    let feedbackTimer = null;
+
+    function setScreen(name) {
+      Object.entries(screens).forEach(([key, element]) => {
+        element.classList.toggle('active', key === name);
+      });
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (name === 'home') {
+        passwordBox.classList.remove('open');
+        teacherPassword.value = '';
+        passwordError.textContent = '';
+      }
+    }
+
+    function setConnection(state, message) {
+      connectionStatus.dataset.state = state;
+      connectionText.textContent = message;
+      isConnected = state === 'online';
+      sendButtons.forEach(button => { button.disabled = !isConnected; });
+    }
+
+    function showFeedback(message, type) {
+      clearTimeout(feedbackTimer);
+      sendFeedback.textContent = message;
+      sendFeedback.className = 'feedback ' + type;
+      feedbackTimer = setTimeout(() => {
+        sendFeedback.textContent = '';
+        sendFeedback.className = 'feedback';
+      }, 2600);
+    }
+
+    function safeCount(value) {
+      const number = Number(value);
+      return Number.isFinite(number) && number >= 0 ? Math.floor(number) : 0;
+    }
+
+    function updateCounts(data) {
+      const counts = data && data.counts ? data.counts : {};
+      const values = {
+        like: safeCount(counts.like),
+        empathy: safeCount(counts.empathy),
+        cheer: safeCount(counts.cheer)
+      };
+      const total = safeCount(data && data.total);
+      ['student', 'teacher'].forEach(mode => {
+        document.getElementById(mode + 'Like').textContent = values.like.toLocaleString('ko-KR');
+        document.getElementById(mode + 'Empathy').textContent = values.empathy.toLocaleString('ko-KR');
+        document.getElementById(mode + 'Cheer').textContent = values.cheer.toLocaleString('ko-KR');
+        document.getElementById(mode + 'Total').textContent = total.toLocaleString('ko-KR');
+      });
+    }
+
+    function addFloatingReaction(cloud, emoji) {
+      const empty = cloud.querySelector('.empty-message');
+      if (empty) empty.hidden = true;
+      const item = document.createElement('span');
+      item.className = 'floating-reaction';
+      item.textContent = emoji;
+      item.style.setProperty('--x', (8 + Math.random() * 76).toFixed(1) + '%');
+      item.setAttribute('aria-hidden', 'true');
+      cloud.appendChild(item);
+      item.addEventListener('animationend', () => item.remove(), { once: true });
+      while (cloud.querySelectorAll('.floating-reaction').length > 24) {
+        cloud.querySelector('.floating-reaction').remove();
+      }
+    }
+
+    async function sendReaction(type, button) {
+      if (!reactionInfo[type]) return;
+      if (!database || !isConnected) {
+        showFeedback('인터넷 연결을 확인해 주세요. 반응을 보내지 못했습니다.', 'error');
+        return;
+      }
+
+      button.classList.remove('pop');
+      void button.offsetWidth;
+      button.classList.add('pop');
+      setTimeout(() => button.classList.remove('pop'), 170);
+
+      const eventKey = database.ref(PRACTICE_PATH + '/events').push().key;
+      const updates = {};
+      updates[PRACTICE_PATH + '/counts/' + type] = firebase.database.ServerValue.increment(1);
+      updates[PRACTICE_PATH + '/total'] = firebase.database.ServerValue.increment(1);
+      updates[PRACTICE_PATH + '/events/' + eventKey] = {
+        type,
+        emoji: reactionInfo[type].emoji,
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+      };
+
+      try {
+        await database.ref().update(updates);
+        showFeedback(reactionInfo[type].emoji + ' 반응을 보냈어요!', 'success');
+      } catch (error) {
+        console.error('반응 전송 실패', error);
+        showFeedback('반응을 보내지 못했습니다. 연결 상태를 확인해 주세요.', 'error');
+      }
+    }
+
+    function startFirebase() {
+      if (!firebaseConfig.databaseURL || firebaseConfig.databaseURL.includes('[')) {
+        setConnection('error', 'Firebase databaseURL 설정을 확인해 주세요');
+        return;
+      }
+      if (typeof firebase === 'undefined') {
+        setConnection('error', 'Firebase 프로그램을 불러오지 못했습니다');
+        return;
+      }
+
+      try {
+        firebase.initializeApp(firebaseConfig);
+        database = firebase.database();
+      } catch (error) {
+        console.error('Firebase 초기화 실패', error);
+        setConnection('error', 'Firebase 설정을 확인해 주세요');
+        return;
+      }
+
+      database.ref('.info/connected').on('value', snapshot => {
+        snapshot.val() === true
+          ? setConnection('online', '실시간 연결됨')
+          : setConnection('offline', '연결이 끊겼습니다. 다시 연결 중');
+      }, error => {
+        console.error('연결 상태 확인 실패', error);
+        setConnection('error', '연결 상태를 확인하지 못했습니다');
+      });
+
+      database.ref(PRACTICE_PATH).on('value', snapshot => {
+        updateCounts(snapshot.val() || {});
+      }, error => {
+        console.error('반응 불러오기 실패', error);
+        setConnection('error', '반응을 불러오지 못했습니다');
+      });
+
+      database.ref(PRACTICE_PATH + '/events').limitToLast(30).on('child_added', snapshot => {
+        const event = snapshot.val() || {};
+        const info = reactionInfo[event.type];
+        if (!info) return;
+        addFloatingReaction(document.getElementById('studentCloud'), info.emoji);
+        addFloatingReaction(document.getElementById('teacherCloud'), info.emoji);
+      }, error => {
+        console.error('실시간 반응 수신 실패', error);
+        setConnection('error', '실시간 반응을 받지 못했습니다');
+      });
+    }
+
+    document.getElementById('teacherModeButton').addEventListener('click', () => {
+      passwordBox.classList.add('open');
+      teacherPassword.value = '';
+      passwordError.textContent = '';
+      teacherPassword.focus();
+    });
+
+    document.getElementById('studentModeButton').addEventListener('click', () => setScreen('student'));
+
+    passwordBox.addEventListener('submit', event => {
+      event.preventDefault();
+      if (teacherPassword.value === '1004') {
+        teacherPassword.value = '';
+        passwordError.textContent = '';
+        setScreen('teacher');
+      } else {
+        passwordError.textContent = '비밀번호가 맞지 않습니다. 다시 입력해 주세요.';
+        teacherPassword.select();
+      }
+    });
+
+    document.querySelectorAll('[data-home]').forEach(button => {
+      button.addEventListener('click', () => setScreen('home'));
+    });
+
+    sendButtons.forEach(button => {
+      button.disabled = true;
+      button.addEventListener('click', () => sendReaction(button.dataset.reaction, button));
+    });
+
+    window.addEventListener('load', startFirebase);
+    setTimeout(() => {
+      if (!database) setConnection('error', 'Firebase 프로그램을 불러오지 못했습니다');
+    }, 7000);
+  </script>
+</body>
+</html>
